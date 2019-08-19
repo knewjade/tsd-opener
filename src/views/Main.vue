@@ -1,9 +1,7 @@
 <template>
     <v-app>
         <v-app-bar app>
-            <v-toolbar-title>
-                <router-link to="/">TSD Opener</router-link>
-            </v-toolbar-title>
+            <v-toolbar-title>TSD Opener</v-toolbar-title>
 
             <v-spacer></v-spacer>
 
