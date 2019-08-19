@@ -6,7 +6,7 @@
             <v-spacer></v-spacer>
 
             <div class="checkbox">
-                <v-checkbox v-model="harddrop" label="Harddrop"/>
+                <v-checkbox v-model="softdrop" label="Softdrop"/>
             </div>
 
             <div class="checkbox">
@@ -19,7 +19,7 @@
         </v-app-bar>
 
         <v-content>
-            <ListPanel :harddrop="harddrop" :hold="hold" :airTSD="airTSD"/>
+            <ListPanel :harddrop="!softdrop" :hold="hold" :airTSD="airTSD"/>
         </v-content>
     </v-app>
 </template>
@@ -34,7 +34,7 @@ import ListPanel from '@/components/ListPanel.vue';
     },
 })
 export default class Main extends Vue {
-    private harddrop: boolean = true;
+    private softdrop: boolean = false;
     private hold: boolean = false;
     private airTSD: boolean = true;
 }
