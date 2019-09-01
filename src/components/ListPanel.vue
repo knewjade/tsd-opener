@@ -3,16 +3,16 @@
         <v-text-field v-model="suffix" label="filtering"/>
 
         <v-container v-if="this.items != null">
-            <div v-for="(indexes, name, index) in this.items" :key="name"
+            <div v-for="(item, index) in this.items" :key="name"
                  :class="`panel${index % 2}`"
-                 v-if="suffix === '' || name.startsWith(suffixUpperCase)"
+                 v-if="suffix === '' || item.name.startsWith(suffixUpperCase)"
             >
                 <div @click="onClick(index)">
-                    {{ name }} [{{ indexes.length }}]
+                    {{ item.name }} [{{ item.indexes.length }}]
                 </div>
 
                 <v-container v-if="selectedIndex === index">
-                    <ImagesPanel :indexes="indexes" maxWidth="150" :airTSD="airTSD"/>
+                    <ImagesPanel :indexes="item.indexes" maxWidth="150" :airTSD="airTSD"/>
 
                     <div class="close-panel" @click="onClick(index)">
                         Close
@@ -20,7 +20,8 @@
                 </v-container>
             </div>
         </v-container>
-        <v-container v-else>
+
+        <v-container v-if="this.message != null">
             Loading...
         </v-container>
     </v-container>
@@ -53,62 +54,72 @@ function getData(hold: boolean, harddrop: boolean) {
     },
 })
 export default class ListPanel extends Vue {
-    @Prop() hold!: boolean;
-    @Prop() harddrop!: boolean;
-    @Prop() airTSD!: boolean;
+    @Prop() private hold!: boolean;
+    @Prop() private harddrop!: boolean;
+    @Prop() private airTSD!: boolean;
 
-    private items: { [name in string]: number[] } | null = null;
+    private items: Array<{ name: string, indexes: number[] }> | null = null;
     private selectedIndex = -1;
-    private suffix: string = "";
-
-    @Watch('hold')
-    onChangedHold() {
-        this.reload();
-    }
-
-    @Watch('harddrop')
-    onChangedHarddrop() {
-        this.reload();
-    }
-
-    @Watch('airTSD')
-    onChangedAirTSD() {
-        this.reload();
-    }
+    private suffix: string = '';
+    private message: string | null = null;
 
     public created() {
         this.reload();
     }
 
+    get suffixUpperCase() {
+        return this.suffix.toUpperCase();
+    }
+
+    @Watch('hold')
+    private onChangedHold() {
+        this.reload();
+    }
+
+    @Watch('harddrop')
+    private onChangedHarddrop() {
+        this.reload();
+    }
+
+    @Watch('airTSD')
+    private onChangedAirTSD() {
+        this.reload();
+    }
+
     private reload() {
         this.items = null;
+        this.message = 'Loading...';
         setTimeout(() => {
-            const i = getData(this.hold, this.harddrop);
-            i.then((data: any) => {
+            const promise = getData(this.hold, this.harddrop);
+            promise.then((data: any) => {
                 const items = data.default as { [name in string]: number[] };
+                const keys = Object.keys(items).sort((a, b) => a.localeCompare(b));
+                const filtered: Array<{ name: string, indexes: number[] }> = [];
+
                 if (this.airTSD) {
-                    this.items = items;
-                } else {
-                    const filtered: { [name in string]: number[] } = {};
-                    for (let key in items) {
-                        filtered[key] = items[key].filter(v => v < 82);
+                    for (const key of keys) {
+                        filtered.push({ name: key, indexes: items[key] });
                     }
-                    this.items = filtered;
+                } else {
+                    for (const key of keys) {
+                        filtered.push({ name: key, indexes: items[key].filter((v) => v < 82) });
+                    }
                 }
-            }).catch(console.error);
-        }, 10);
+
+                this.items = filtered;
+                this.message = null;
+            }).catch((error) => {
+                this.message = error.toString();
+            });
+        }, 0);
     }
 
     private onClick(index: number) {
-        if (this.selectedIndex != index) {
+        if (this.selectedIndex !== index) {
             this.selectedIndex = index;
         } else {
             this.selectedIndex = -1;
         }
-    }
-
-    get suffixUpperCase() {
-        return this.suffix.toUpperCase();
     }
 }
 </script>
