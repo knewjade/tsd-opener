@@ -3,12 +3,12 @@
         <v-text-field v-model="suffix" label="filtering"/>
 
         <v-container v-if="this.items != null">
-            <div v-for="(item, index) in this.items" :key="name"
+            <div v-for="(indexes, name, index) in this.items" :key="name"
                  :class="`panel${index % 2}`"
-                 v-if="suffix === '' || item.name.startsWith(suffixUpperCase)"
+                 v-if="suffix === '' || name.startsWith(suffixUpperCase)"
             >
                 <div @click="onClick(index)">
-                    {{ item.name }} [{{ item.indexes.length }}]
+                    {{ name }} [{{ indexes.length }}]
                 </div>
 
                 <v-container v-if="selectedIndex === index">
@@ -57,7 +57,7 @@ export default class ListPanel extends Vue {
     @Prop() harddrop!: boolean;
     @Prop() airTSD!: boolean;
 
-    private items: { name: string, indexes: number[] }[] | null = null;
+    private items: { [name in string]: number[] } | null = null;
     private selectedIndex = -1;
     private suffix: string = "";
 
@@ -86,20 +86,15 @@ export default class ListPanel extends Vue {
             const i = getData(this.hold, this.harddrop);
             i.then((data: any) => {
                 const items = data.default as { [name in string]: number[] };
-                const keys = Object.keys(items).sort((a, b) => a.localeCompare(b));
-                const filtered: { name: string, indexes: number[] }[] = [];
-
                 if (this.airTSD) {
-                    for (const key of keys) {
-                        filtered.push({ name: key, indexes: items[key] });
-                    }
+                    this.items = items;
                 } else {
-                    for (const key of keys) {
-                        filtered.push({ name: key, indexes: items[key].filter(v => v < 82) });
+                    const filtered: { [name in string]: number[] } = {};
+                    for (let key in items) {
+                        filtered[key] = items[key].filter(v => v < 82);
                     }
+                    this.items = filtered;
                 }
-
-                this.items = filtered;
             }).catch(console.error);
         }, 10);
     }
