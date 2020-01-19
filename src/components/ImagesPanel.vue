@@ -26,12 +26,12 @@ export default class Home extends Vue {
 </script>
 
 <style scoped>
-.wrapper{
+.wrapper {
     display: flex;
     flex-wrap: wrap;
 }
 
-.field-card{
+.field-card {
     margin: 2px;
     padding: 2px;
 }
