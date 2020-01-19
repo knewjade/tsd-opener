@@ -50,7 +50,12 @@ function getData(hold: boolean, harddrop: boolean) {
 }
 
 function getFumens() {
-    return import('../assets/data_fumen.json');
+    return import('../assets/data_fumen.json').then((data) => {
+        return data.fumens.map((line) => ({
+            data: line[0],
+            mirror: line[1],
+        }));
+    });
 }
 
 @Component({
@@ -62,9 +67,10 @@ export default class ListPanel extends Vue {
     @Prop() private hold!: boolean;
     @Prop() private harddrop!: boolean;
     @Prop() private airTSD!: boolean;
+    @Prop() private mirror!: boolean;
 
     private items: Array<{ name: string, indexes: number[] }> | null = null;
-    private fumens: string[] | null = null;
+    private fumens: Array<{ data: string, mirror: number }> | null = null;
     private selectedIndex = -1;
     private suffix: string = '';
     private message: string | null = null;
@@ -92,6 +98,11 @@ export default class ListPanel extends Vue {
         this.reload();
     }
 
+    @Watch('mirror')
+    private onChangedMirror() {
+        this.reload();
+    }
+
     private reload() {
         this.fumens = null;
         this.items = null;
@@ -99,20 +110,39 @@ export default class ListPanel extends Vue {
         setTimeout(() => {
             const promise = getData(this.hold, this.harddrop);
 
-            getFumens().then((fumens) => {
+            getFumens().then((fumens: any) => {
                 promise.then((data: any) => {
                     const items = data.default as { [name in string]: number[] };
                     const keys = Object.keys(items).sort((a, b) => a.localeCompare(b));
                     const filtered: Array<{ name: string, indexes: number[] }> = [];
 
-                    if (this.airTSD) {
-                        for (const key of keys) {
-                            filtered.push({ name: key, indexes: items[key] });
+                    const mirrorFilter = (indexes: number[]) => {
+                        if (this.mirror) {
+                            return indexes;
                         }
-                    } else {
-                        for (const key of keys) {
-                            filtered.push({ name: key, indexes: items[key].filter((v) => v < 82) });
+
+                        const indexSet = new Set<number>();
+                        const nextIndexes: number[] = [];
+
+                        for (const index of indexes) {
+                            if (!indexSet.has(fumens[index].mirror)) {
+                                nextIndexes.push(index);
+                                indexSet.add(index);
+                            }
                         }
+
+                        return nextIndexes;
+                    };
+
+                    const createIndexes = (indexes: number[]) => {
+                        if (this.airTSD) {
+                            return mirrorFilter(indexes);
+                        }
+                        return mirrorFilter(indexes.filter((v) => v < 82));
+                    };
+
+                    for (const key of keys) {
+                        filtered.push({ name: key, indexes: createIndexes(items[key]) });
                     }
 
                     this.fumens = fumens;

@@ -3,7 +3,7 @@
         <v-app-bar app>
             <v-toolbar-title>TSD Opener</v-toolbar-title>
 
-            <v-spacer></v-spacer>
+            <v-spacer/>
 
             <div class="checkbox">
                 <v-checkbox v-model="softdrop" label="Softdrop"/>
@@ -16,10 +16,14 @@
             <div class="checkbox">
                 <v-checkbox v-model="airTSD" label="AirTSD"/>
             </div>
+
+            <div class="checkbox">
+                <v-checkbox v-model="mirror" label="Mirror"/>
+            </div>
         </v-app-bar>
 
         <v-content>
-            <ListPanel :harddrop="!softdrop" :hold="hold" :airTSD="airTSD"/>
+            <ListPanel :harddrop="!softdrop" :hold="hold" :airTSD="airTSD" :mirror="mirror"/>
         </v-content>
     </v-app>
 </template>
@@ -37,6 +41,7 @@ export default class Main extends Vue {
     private softdrop: boolean = false;
     private hold: boolean = false;
     private airTSD: boolean = true;
+    private mirror: boolean = true;
 }
 </script>
 
