@@ -1,6 +1,4 @@
 module.exports = {
-    publicPath: process.env.NODE_ENV === 'production'
-        ? 'tsd-opener/'
-        : '/',
+    publicPath: '/',
     outputDir: 'docs/',
 };
