@@ -2,8 +2,9 @@
     <v-container>
         <v-text-field v-model="suffix" label="filtering"/>
 
-        <v-container v-if="this.items != null">
-            <div v-for="(item, index) in this.items" :key="name"
+        <v-container v-if="this.items != null && this.fumens != null">
+            <div v-for="(item, index) in this.items"
+                 :key="item.name"
                  :class="`panel${index % 2}`"
                  v-if="suffix === '' || item.name.startsWith(suffixUpperCase)"
             >
@@ -12,7 +13,7 @@
                 </div>
 
                 <v-container v-if="selectedIndex === index">
-                    <ImagesPanel :indexes="item.indexes" maxWidth="150" :airTSD="airTSD"/>
+                    <ImagesPanel :indexes="item.indexes" :fumens="fumens" maxWidth="150" :airTSD="airTSD"/>
 
                     <div class="close-panel" @click="onClick(index)">
                         Close
@@ -48,6 +49,10 @@ function getData(hold: boolean, harddrop: boolean) {
     }
 }
 
+function getFumens() {
+    return import('../assets/data_fumen.json');
+}
+
 @Component({
     components: {
         ImagesPanel,
@@ -59,6 +64,7 @@ export default class ListPanel extends Vue {
     @Prop() private airTSD!: boolean;
 
     private items: Array<{ name: string, indexes: number[] }> | null = null;
+    private fumens: string[] | null = null;
     private selectedIndex = -1;
     private suffix: string = '';
     private message: string | null = null;
@@ -87,27 +93,32 @@ export default class ListPanel extends Vue {
     }
 
     private reload() {
+        this.fumens = null;
         this.items = null;
         this.message = 'Loading...';
         setTimeout(() => {
             const promise = getData(this.hold, this.harddrop);
-            promise.then((data: any) => {
-                const items = data.default as { [name in string]: number[] };
-                const keys = Object.keys(items).sort((a, b) => a.localeCompare(b));
-                const filtered: Array<{ name: string, indexes: number[] }> = [];
 
-                if (this.airTSD) {
-                    for (const key of keys) {
-                        filtered.push({ name: key, indexes: items[key] });
-                    }
-                } else {
-                    for (const key of keys) {
-                        filtered.push({ name: key, indexes: items[key].filter((v) => v < 82) });
-                    }
-                }
+            getFumens().then((fumens) => {
+                promise.then((data: any) => {
+                    const items = data.default as { [name in string]: number[] };
+                    const keys = Object.keys(items).sort((a, b) => a.localeCompare(b));
+                    const filtered: Array<{ name: string, indexes: number[] }> = [];
 
-                this.items = filtered;
-                this.message = null;
+                    if (this.airTSD) {
+                        for (const key of keys) {
+                            filtered.push({ name: key, indexes: items[key] });
+                        }
+                    } else {
+                        for (const key of keys) {
+                            filtered.push({ name: key, indexes: items[key].filter((v) => v < 82) });
+                        }
+                    }
+
+                    this.fumens = fumens;
+                    this.items = filtered;
+                    this.message = null;
+                });
             }).catch((error) => {
                 this.message = error.toString();
             });
